@@ -56,4 +56,55 @@ function create_block_dmgposts_block_init() {
 		register_block_type( __DIR__ . "/build/{$block_type}" );
 	}
 }
+
+
 add_action( 'init', 'create_block_dmgposts_block_init' );
+
+require_once 'wp-cli-custom.php';
+/*
+add_action('init', 'register_dmg_post_meta');
+
+function register_dmg_post_meta() {
+    register_post_meta('post', 'dmg_read_more_block', array(
+        'show_in_rest' => true,
+        'single' => true,
+        'type' => 'boolean',
+        'auth_callback' => function() {
+            return current_user_can('edit_posts');
+        }
+    ));
+}*/
+
+
+// Add after your existing init actions
+
+// Register the meta field
+add_action('init', 'register_dmg_read_more_meta');
+function register_dmg_read_more_meta() {
+    register_post_meta('post', 'dmg_read_more_block_used', array(
+        'show_in_rest' => true,
+        'single' => true,
+        'type' => 'boolean',
+        'auth_callback' => function() {
+            return current_user_can('edit_posts');
+        }
+    ));
+}
+
+// Hook into post save
+add_action('save_post', 'check_for_read_more_block', 10, 3);
+function check_for_read_more_block($post_id, $post, $update) {
+    // If this is an autosave, don't do anything
+    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+        return;
+    }
+
+    // Check if content contains savedReadPostId
+    if (strpos($post->post_content, 'savedReadPostId') !== false) {
+        update_post_meta($post_id, 'dmg_read_more_block_used', true);
+    } else {
+        delete_post_meta($post_id, 'dmg_read_more_block_used');
+    }
+}
+
+

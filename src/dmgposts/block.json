@@ -8,6 +8,17 @@
 	"icon": "smiley",
 	"description": "Example block scaffolded with Create Block tool.",
 	"example": {},
+	"attributes": {
+		"searchById": {
+			"type": "integer"
+		},
+		"searchByTitle": {
+			"type": "string"
+		},
+		"savedReadPostId": {
+			"type": "integer"
+		}	
+	},	
 	"supports": {
 		"html": false
 	},

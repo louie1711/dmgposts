@@ -13,6 +13,17 @@ return array(
 		'example' => array(
 			
 		),
+		'attributes' => array(
+			'searchById' => array(
+				'type' => 'integer'
+			),
+			'searchByTitle' => array(
+				'type' => 'string'
+			),
+			'savedReadPostId' => array(
+				'type' => 'integer'
+			)
+		),
 		'supports' => array(
 			'html' => false
 		),

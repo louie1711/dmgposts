@@ -8,7 +8,7 @@
   \*********************************/
 /***/ ((module) => {
 
-module.exports = /*#__PURE__*/JSON.parse('{"$schema":"https://schemas.wp.org/trunk/block.json","apiVersion":3,"name":"create-block/dmgposts","version":"0.1.0","title":"Dmgposts","category":"widgets","icon":"smiley","description":"Example block scaffolded with Create Block tool.","example":{},"supports":{"html":false},"textdomain":"dmgposts","editorScript":"file:./index.js","editorStyle":"file:./index.css","style":"file:./style-index.css","render":"file:./render.php","viewScript":"file:./view.js"}');
+module.exports = /*#__PURE__*/JSON.parse('{"$schema":"https://schemas.wp.org/trunk/block.json","apiVersion":3,"name":"create-block/dmgposts","version":"0.1.0","title":"Dmgposts","category":"widgets","icon":"smiley","description":"Example block scaffolded with Create Block tool.","example":{},"attributes":{"searchById":{"type":"integer"},"searchByTitle":{"type":"string"},"savedReadPostId":{"type":"integer"}},"supports":{"html":false},"textdomain":"dmgposts","editorScript":"file:./index.js","editorStyle":"file:./index.css","style":"file:./style-index.css","render":"file:./render.php","viewScript":"file:./view.js"}');
 
 /***/ }),
 
@@ -82,24 +82,42 @@ function Edit({
   const [foundPosts, setFoundPosts] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_3__.useState)([]);
   const [postTitle, setPostTitle] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_3__.useState)("post title to be!");
   const [postLink, setPostLink] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_3__.useState)("a link be herey");
+  const [currentPage, setCurrentPage] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_3__.useState)(1);
+  const postsPerPage = 10;
+
+  // Add this function to handle pagination
+  const indexOfLastPost = currentPage * postsPerPage;
+  const indexOfFirstPost = indexOfLastPost - postsPerPage;
+  const currentPosts = foundPosts.slice(indexOfFirstPost, indexOfLastPost);
+  const totalPages = Math.ceil(foundPosts.length / postsPerPage);
+  const paginate = pageNumber => setCurrentPage(pageNumber);
 
   //const [] = useState([]);
 
   const findPosts = async () => {
-    let queryParams = '?';
-    if (searchById) {
-      queryParams += `id=${searchById}`;
-    }
-    if (searchByTitle) {
-      queryParams += `${searchById ? '&' : ''}search=${searchByTitle}`;
-    }
     try {
-      const posts = await _wordpress_api_fetch__WEBPACK_IMPORTED_MODULE_4___default()({
-        path: `/wp/v2/posts${queryParams}`
-      });
+      let posts;
+      if (searchById) {
+        // Fetch single post by ID
+        posts = await _wordpress_api_fetch__WEBPACK_IMPORTED_MODULE_4___default()({
+          path: `/wp/v2/posts/${searchById}`
+        });
+        // Convert single post to array for consistency
+        posts = [posts];
+      } else {
+        // Regular search
+        let queryParams = '?per_page=-1&orderby=date&order=desc';
+        if (searchByTitle) {
+          queryParams += `&search=${searchByTitle}`;
+        }
+        posts = await _wordpress_api_fetch__WEBPACK_IMPORTED_MODULE_4___default()({
+          path: `/wp/v2/posts${queryParams}`
+        });
+      }
       setFoundPosts(posts);
     } catch (error) {
       console.error('Error fetching posts:', error);
+      setFoundPosts([]);
     }
   };
   const selectThisAsLink = (e, post) => {
@@ -109,6 +127,11 @@ function Edit({
     console.log(JSON.stringify(post));
     setPostTitle(`Read More: ${post.title.rendered}`);
     setPostLink(post.link);
+
+    // Save the selected post ID to block attributes
+    setAttributes({
+      savedReadPostId: post.id
+    });
   };
   return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.Fragment, {
     children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(_wordpress_block_editor__WEBPACK_IMPORTED_MODULE_1__.InspectorControls, {
@@ -135,16 +158,42 @@ function Edit({
           onClick: findPosts,
           className: "components-button",
           children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Find posts', 'dmgposts')
-        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("div", {
-          children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("ul", {
-            children: foundPosts.map(post => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("li", {
+        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("div", {
+          style: {
+            border: '1px solid red'
+          },
+          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("ul", {
+            children: currentPosts.map(post => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("li", {
               children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("a", {
                 href: post.link,
                 onClick: e => selectThisAsLink(e, post),
                 children: post.title.rendered
               })
             }, post.id))
-          })
+          }), foundPosts.length > postsPerPage && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("div", {
+            className: "pagination",
+            style: {
+              border: '1px solid green'
+            },
+            children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.Button, {
+              isSmall: true,
+              onClick: () => paginate(currentPage - 1),
+              disabled: currentPage === 1,
+              children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Previous', 'dmgposts')
+            }), Array.from({
+              length: totalPages
+            }, (_, i) => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.Button, {
+              isSmall: true,
+              variant: currentPage === i + 1 ? 'primary' : 'secondary',
+              onClick: () => paginate(i + 1),
+              children: i + 1
+            }, i + 1)), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.Button, {
+              isSmall: true,
+              onClick: () => paginate(currentPage + 1),
+              disabled: currentPage === totalPages,
+              children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Next', 'dmgposts')
+            })]
+          })]
         })]
       })
     }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("div", {

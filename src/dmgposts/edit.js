@@ -34,102 +34,153 @@ import './editor.scss';
  * @return {Element} Element to render.
  */
 export default function Edit({ attributes, setAttributes }) {
-	const { searchById, searchByTitle } = attributes;
-	const [foundPosts, setFoundPosts] = useState([]);	
+    const { searchById, searchByTitle } = attributes;
+    const [foundPosts, setFoundPosts] = useState([]);	
 
-	const [postTitle, setPostTitle] = useState("post title to be!");
+    const [postTitle, setPostTitle] = useState("post title to be!");
 
-	const [postLink, setPostLink] = useState("a link be herey");
+    const [postLink, setPostLink] = useState("a link be herey");
+
+	const [currentPage, setCurrentPage] = useState(1);
+    const postsPerPage = 10;
+
+    // Add this function to handle pagination
+    const indexOfLastPost = currentPage * postsPerPage;
+    const indexOfFirstPost = indexOfLastPost - postsPerPage;
+    const currentPosts = foundPosts.slice(indexOfFirstPost, indexOfLastPost);
+    const totalPages = Math.ceil(foundPosts.length / postsPerPage);
+
+    const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
 
-	//const [] = useState([]);
+    //const [] = useState([]);
 
-	const findPosts = async () => {
-		let queryParams = '?';
-		if (searchById) {
-			queryParams += `id=${searchById}`;
-		}
-		if (searchByTitle) {
-			queryParams += `${searchById ? '&' : ''}search=${searchByTitle}`;
-		}
-
+    const findPosts = async () => {
 		try {
-			const posts = await apiFetch({
-				path: `/wp/v2/posts${queryParams}`,
-			});
+			let posts;
+			if (searchById) {
+				// Fetch single post by ID
+				posts = await apiFetch({
+					path: `/wp/v2/posts/${searchById}`,
+				});
+				// Convert single post to array for consistency
+				posts = [posts];
+			} else {
+				// Regular search
+				let queryParams = '?per_page=-1&orderby=date&order=desc';
+				if (searchByTitle) {
+					queryParams += `&search=${searchByTitle}`;
+				}
+				posts = await apiFetch({
+					path: `/wp/v2/posts${queryParams}`,
+				});
+			}
 			setFoundPosts(posts);
 		} catch (error) {
 			console.error('Error fetching posts:', error);
+			setFoundPosts([]);
 		}
-	};
+    };
 
-	const selectThisAsLink = (e, post) => {
-		e.preventDefault();
-		console.log("post = ");
-		console.log(post);
-		console.log(JSON.stringify(post));
-		setPostTitle(`Read More: ${post.title.rendered}`);
-		setPostLink(post.link);
-	};
+    const selectThisAsLink = (e, post) => {
+        e.preventDefault();
+        console.log("post = ");
+        console.log(post);
+        console.log(JSON.stringify(post));
+        setPostTitle(`Read More: ${post.title.rendered}`);
+        setPostLink(post.link);
 
-	return (
-		<>
-			<InspectorControls>
-				<PanelBody title={__('Insert Post Link', 'dmgposts')}>
-					<TextControl
-						__nextHasNoMarginBottom
-						__next40pxDefaultSize
-						label={__(
-							'search by the id',
-							'dmgposts'
-						)}
-						value={searchById || ''}
-						onChange={(value) =>
-							setAttributes({ searchById: value })
-						}
-					/>
-					<TextControl
-						__nextHasNoMarginBottom
-						__next40pxDefaultSize
-						label={__(
-							'search by the post title',
-							'dmgposts'
-						)}
-						value={searchByTitle || ''}
-						onChange={(value) =>
-							setAttributes({ searchByTitle: value })
-						}
-					/>
-					<Button
-						variant="primary"
-						onClick={findPosts}
-						className="components-button"
-					>
-						{__('Find posts', 'dmgposts')}
-					</Button>
+		// Save the selected post ID to block attributes
+		setAttributes({ savedReadPostId: post.id });
+    };	
 
-					<div>
-						{
-							<ul>
-								{foundPosts.map((post) => (
-									<li key={post.id}>
-										<a href={post.link} onClick={(e) => selectThisAsLink(e, post)}>{post.title.rendered}</a>
-									</li>
-								))}
-							</ul>
+    return (
+        <>
+            <InspectorControls>
+                <PanelBody title={__('Insert Post Link', 'dmgposts')}>
+                    <TextControl
+                        __nextHasNoMarginBottom
+                        __next40pxDefaultSize
+                        label={__(
+                            'search by the id',
+                            'dmgposts'
+                        )}
+                        value={searchById || ''}
+                        onChange={(value) =>
+                            setAttributes({ searchById: value })
+                        }
+                    />
+                    <TextControl
+                        __nextHasNoMarginBottom
+                        __next40pxDefaultSize
+                        label={__(
+                            'search by the post title',
+                            'dmgposts'
+                        )}
+                        value={searchByTitle || ''}
+                        onChange={(value) =>
+                            setAttributes({ searchByTitle: value })
+                        }
+                    />
+                    <Button
+                        variant="primary"
+                        onClick={findPosts}
+                        className="components-button"
+                    >
+                        {__('Find posts', 'dmgposts')}
+                    </Button>
 
-						}
-					</div>
-				</PanelBody>
-			</InspectorControls>
+                    <div style={{ border: '1px solid red' }}>
+                        <ul>
+                            {currentPosts.map((post) => (
+                                <li key={post.id}>
+                                    <a href={post.link} onClick={(e) => selectThisAsLink(e, post)}>
+                                        {post.title.rendered}
+                                    </a>
+                                </li>
+                            ))}
+                        </ul>
+                        {foundPosts.length > postsPerPage && (
+                            <div className="pagination" style={{ border: '1px solid green' }}>
+                                <Button
+                                    isSmall
+                                    onClick={() => paginate(currentPage - 1)}
+                                    disabled={currentPage === 1}
+                                >
+                                    {__('Previous', 'dmgposts')}
+                                </Button>
+                                
+                                {Array.from({ length: totalPages }, (_, i) => (
+                                    <Button
+                                        key={i + 1}
+                                        isSmall
+                                        variant={currentPage === i + 1 ? 'primary' : 'secondary'}
+                                        onClick={() => paginate(i + 1)}
+                                    >
+                                        {i + 1}
+                                    </Button>
+                                ))}
+                                
+                                <Button
+                                    isSmall
+                                    onClick={() => paginate(currentPage + 1)}
+                                    disabled={currentPage === totalPages}
+                                >
+                                    {__('Next', 'dmgposts')}
+                                </Button>
+                            </div>
+                        )}
+                    </div>
+                </PanelBody>
+            </InspectorControls>
 
-			<div {...useBlockProps()}>
+            <div {...useBlockProps()}>
 
-				<p class="dmg-read-more">
-						<a href={postLink}>{postTitle}</a>
-				</p>
+                <p class="dmg-read-more">
+                        <a href={postLink}>{postTitle}</a>
+                </p>
 
-			</div>
-		</>
-	);
+            </div>
+        </>
+    );
 }
