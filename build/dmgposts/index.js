@@ -80,6 +80,11 @@ function Edit({
     searchByTitle
   } = attributes;
   const [foundPosts, setFoundPosts] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_3__.useState)([]);
+  const [postTitle, setPostTitle] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_3__.useState)("post title to be!");
+  const [postLink, setPostLink] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_3__.useState)("a link be herey");
+
+  //const [] = useState([]);
+
   const findPosts = async () => {
     let queryParams = '?';
     if (searchById) {
@@ -96,6 +101,14 @@ function Edit({
     } catch (error) {
       console.error('Error fetching posts:', error);
     }
+  };
+  const selectThisAsLink = (e, post) => {
+    e.preventDefault();
+    console.log("post = ");
+    console.log(post);
+    console.log(JSON.stringify(post));
+    setPostTitle(`Read More: ${post.title.rendered}`);
+    setPostLink(post.link);
   };
   return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.Fragment, {
     children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(_wordpress_block_editor__WEBPACK_IMPORTED_MODULE_1__.InspectorControls, {
@@ -127,6 +140,7 @@ function Edit({
             children: foundPosts.map(post => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("li", {
               children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("a", {
                 href: post.link,
+                onClick: e => selectThisAsLink(e, post),
                 children: post.title.rendered
               })
             }, post.id))
@@ -136,7 +150,11 @@ function Edit({
     }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("div", {
       ...(0,_wordpress_block_editor__WEBPACK_IMPORTED_MODULE_1__.useBlockProps)(),
       children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("p", {
-        children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Search for posts using the sidebar controls', 'dmgposts')
+        class: "dmg-read-more",
+        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("a", {
+          href: postLink,
+          children: postTitle
+        })
       })
     })]
   });

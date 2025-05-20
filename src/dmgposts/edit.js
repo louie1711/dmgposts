@@ -34,83 +34,102 @@ import './editor.scss';
  * @return {Element} Element to render.
  */
 export default function Edit({ attributes, setAttributes }) {
-    const { searchById, searchByTitle } = attributes;
-    const [foundPosts, setFoundPosts] = useState([]);
+	const { searchById, searchByTitle } = attributes;
+	const [foundPosts, setFoundPosts] = useState([]);	
 
-    const findPosts = async () => {
-        let queryParams = '?';
-        if (searchById) {
-            queryParams += `id=${searchById}`;
-        }
-        if (searchByTitle) {
-            queryParams += `${searchById ? '&' : ''}search=${searchByTitle}`;
-        }
+	const [postTitle, setPostTitle] = useState("post title to be!");
 
-        try {
-            const posts = await apiFetch({
-                path: `/wp/v2/posts${queryParams}`,
-            });
-            setFoundPosts(posts);
-        } catch (error) {
-            console.error('Error fetching posts:', error);
-        }
-    };
+	const [postLink, setPostLink] = useState("a link be herey");
 
-    return (
-        <>
-            <InspectorControls>
-                <PanelBody title={__('Insert Post Link', 'dmgposts')}>
-                    <TextControl
-                        __nextHasNoMarginBottom
-                        __next40pxDefaultSize
-                        label={__(
-                            'search by the id',
-                            'dmgposts'
-                        )}
-                        value={searchById || ''}
-                        onChange={(value) =>
-                            setAttributes({ searchById: value })
-                        }
-                    />
-                    <TextControl
-                        __nextHasNoMarginBottom
-                        __next40pxDefaultSize
-                        label={__(
-                            'search by the post title',
-                            'dmgposts'
-                        )}
-                        value={searchByTitle || ''}
-                        onChange={(value) =>
-                            setAttributes({ searchByTitle: value })
-                        }
-                    />
-                    <Button
-                        variant="primary"
-                        onClick={findPosts}
-                        className="components-button"
-                    >
-                        {__('Find posts', 'dmgposts')}
-                    </Button>
+
+	//const [] = useState([]);
+
+	const findPosts = async () => {
+		let queryParams = '?';
+		if (searchById) {
+			queryParams += `id=${searchById}`;
+		}
+		if (searchByTitle) {
+			queryParams += `${searchById ? '&' : ''}search=${searchByTitle}`;
+		}
+
+		try {
+			const posts = await apiFetch({
+				path: `/wp/v2/posts${queryParams}`,
+			});
+			setFoundPosts(posts);
+		} catch (error) {
+			console.error('Error fetching posts:', error);
+		}
+	};
+
+	const selectThisAsLink = (e, post) => {
+		e.preventDefault();
+		console.log("post = ");
+		console.log(post);
+		console.log(JSON.stringify(post));
+		setPostTitle(`Read More: ${post.title.rendered}`);
+		setPostLink(post.link);
+	};
+
+	return (
+		<>
+			<InspectorControls>
+				<PanelBody title={__('Insert Post Link', 'dmgposts')}>
+					<TextControl
+						__nextHasNoMarginBottom
+						__next40pxDefaultSize
+						label={__(
+							'search by the id',
+							'dmgposts'
+						)}
+						value={searchById || ''}
+						onChange={(value) =>
+							setAttributes({ searchById: value })
+						}
+					/>
+					<TextControl
+						__nextHasNoMarginBottom
+						__next40pxDefaultSize
+						label={__(
+							'search by the post title',
+							'dmgposts'
+						)}
+						value={searchByTitle || ''}
+						onChange={(value) =>
+							setAttributes({ searchByTitle: value })
+						}
+					/>
+					<Button
+						variant="primary"
+						onClick={findPosts}
+						className="components-button"
+					>
+						{__('Find posts', 'dmgposts')}
+					</Button>
 
 					<div>
-					{
-                    <ul>
-                        {foundPosts.map((post) => (
-                            <li key={post.id}>
-                                <a href={post.link}>{post.title.rendered}</a>
-                            </li>
-                        ))}
-                    </ul>
-                	}
-					</div>
-                </PanelBody>
-            </InspectorControls>
+						{
+							<ul>
+								{foundPosts.map((post) => (
+									<li key={post.id}>
+										<a href={post.link} onClick={(e) => selectThisAsLink(e, post)}>{post.title.rendered}</a>
+									</li>
+								))}
+							</ul>
 
-            <div {...useBlockProps()}>
-                
-                    <p>{__('Search for posts using the sidebar controls', 'dmgposts')}</p>
-              
-            </div>
-        </>
-    );
+						}
+					</div>
+				</PanelBody>
+			</InspectorControls>
+
+			<div {...useBlockProps()}>
+
+				<p class="dmg-read-more">
+						<a href={postLink}>{postTitle}</a>
+				</p>
+
+			</div>
+		</>
+	);
 }
