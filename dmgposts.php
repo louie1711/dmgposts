@@ -1,13 +1,8 @@
 <?php
 /**
  * Plugin Name:       Dmgposts
- * Description:       Example block scaffolded with Create Block tool.
- * Version:           0.1.0
- * Requires at least: 6.7
- * Requires PHP:      7.4
- * Author:            The WordPress Contributors
- * License:           GPL-2.0-or-later
- * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
+ * Description:       A block that inserts a link to selected post
+ * Author:            Louis M
  * Text Domain:       dmgposts
  *
  * @package CreateBlock
@@ -57,41 +52,18 @@ function create_block_dmgposts_block_init() {
 	}
 }
 
+/**
+ * lm - boilerplate code above, my code below
+ */
 
 add_action( 'init', 'create_block_dmgposts_block_init' );
 
 require_once 'wp-cli-custom.php';
-/*
-add_action('init', 'register_dmg_post_meta');
 
-function register_dmg_post_meta() {
-    register_post_meta('post', 'dmg_read_more_block', array(
-        'show_in_rest' => true,
-        'single' => true,
-        'type' => 'boolean',
-        'auth_callback' => function() {
-            return current_user_can('edit_posts');
-        }
-    ));
-}*/
-
-
-// Add after your existing init actions
-
-// Register the meta field
-add_action('init', 'register_dmg_read_more_meta');
-function register_dmg_read_more_meta() {
-    register_post_meta('post', 'dmg_read_more_block_used', array(
-        'show_in_rest' => true,
-        'single' => true,
-        'type' => 'boolean',
-        'auth_callback' => function() {
-            return current_user_can('edit_posts');
-        }
-    ));
-}
-
-// Hook into post save
+/**
+ * on save , store a meta to tell us if dmg-read-more block 
+ * is used in this page/post 
+ */
 add_action('save_post', 'check_for_read_more_block', 10, 3);
 function check_for_read_more_block($post_id, $post, $update) {
     // If this is an autosave, don't do anything
